@@ -37,8 +37,9 @@ def main():
     while True:
         rc = run_session(session_id)
         if rc != 0:
-            print(f"[run_all_sessions] Unexpected exit code {rc}. Stopping.", file=sys.stderr)
-            sys.exit(rc)
+            print(f"[run_all_sessions] Session {session_id} failed with exit code {rc}. Retrying next session...", file=sys.stderr)
+            # Don't exit, just continue to next session
+        
         plan = load_plan()
         if not any_pending(plan):
             print("[run_all_sessions] 🎉 All modules have reached target coverage. Finished.")

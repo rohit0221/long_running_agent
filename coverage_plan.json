@@ -1,0 +1,32 @@
+[
+  {
+    "module": "target_repo/src/domain/models.py",
+    "current_coverage": 100.0,
+    "target_coverage": 90.0,
+    "status": "done"
+  },
+  {
+    "module": "target_repo/src/service/calculator.py",
+    "current_coverage": 100.0,
+    "target_coverage": 90.0,
+    "status": "done"
+  },
+  {
+    "module": "target_repo/src/utils/analytics.py",
+    "current_coverage": 100.0,
+    "target_coverage": 90.0,
+    "status": "done"
+  },
+  {
+    "module": "target_repo/src/utils/helpers.py",
+    "current_coverage": 100.0,
+    "target_coverage": 90.0,
+    "status": "done"
+  },
+  {
+    "module": "target_repo/src/utils/validators.py",
+    "current_coverage": 100.0,
+    "target_coverage": 90.0,
+    "status": "done"
+  }
+]
