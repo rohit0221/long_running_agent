@@ -4,6 +4,10 @@ import os
 from typing import List, Dict, Optional
 from harness.utils import COVERAGE_PLAN_FILE
 
+def normalize_path(path: str) -> str:
+    """Normalize path to use forward slashes."""
+    return path.replace("\\", "/")
+
 def parse_coverage_xml(xml_path: str) -> Dict[str, float]:
     """Parse coverage.xml and return a dict of {module_path: coverage_percent}."""
     if not os.path.exists(xml_path):
@@ -18,10 +22,8 @@ def parse_coverage_xml(xml_path: str) -> Dict[str, float]:
     for package in root.findall(".//package"):
         for cls in package.findall(".//class"):
             filename = cls.get("filename")
-            # Normalize path to be relative to src root if possible, or just use filename
-            # Assuming filename in xml is relative to execution root or absolute
-            # We want to map it to our source files. 
-            # For this POC, we'll assume the filename in XML matches our project structure relative to root.
+            # Normalize path
+            filename = normalize_path(filename)
             
             line_rate = float(cls.get("line-rate", 0.0))
             coverage_percent = line_rate * 100.0
@@ -37,9 +39,43 @@ def get_overall_coverage(xml_path: str) -> float:
     root = tree.getroot()
     return float(root.get("line-rate", 0.0)) * 100.0
 
+def scan_source_files(root_dir: str = "target_repo/src") -> List[str]:
+    """Recursively find all .py files in root_dir."""
+    source_files = []
+    if not os.path.exists(root_dir):
+        return []
+        
+    for root, _, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith(".py") and file != "__init__.py":
+                # Create relative path from project root
+                full_path = os.path.join(root, file)
+                source_files.append(normalize_path(full_path))
+    return source_files
+
 def update_coverage_plan(xml_path: str, target_coverage: float = 90.0):
     """Update coverage_plan.json based on latest XML."""
     current_data = parse_coverage_xml(xml_path)
+    
+    # Fallback: Scan source files to ensure everything is tracked
+    # This handles the case where coverage.xml is missing or empty (no tests)
+    found_files = scan_source_files()
+    for f in found_files:
+        # Check if file is already in current_data (handling separator differences)
+        if f in current_data:
+            continue
+        
+        # Try alternative separators
+        alt_f1 = f.replace("\\", "/")
+        alt_f2 = f.replace("/", "\\")
+        
+        if alt_f1 in current_data:
+            continue
+        if alt_f2 in current_data:
+            continue
+            
+        # Not found, add with 0.0 coverage
+        current_data[f] = 0.0
     
     try:
         with open(COVERAGE_PLAN_FILE, "r") as f:

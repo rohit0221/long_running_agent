@@ -6,21 +6,21 @@ from dotenv import load_dotenv
 # Load environment variables from .env
 load_dotenv()
 
-logger = logging.getLogger("Harness")
-
 class LLMClient:
     def __init__(self, model: str = "gpt-5-nano"):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         self.model = model
 
-    def generate_tests(self, module_code: str, existing_test_code: str, coverage_info: str) -> str:
+    def generate_tests(self, module_code: str, module_path: str, existing_test_code: str, coverage_info: str) -> str:
         """
         Generate improved tests for a module.
         Returns the FULL content of the test file.
         """
         prompt = f"""
-You are an expert Python testing agent.
-Your goal is to increase test coverage for a specific module.
+You are an expert Python testing agent. Your goal is to improve test coverage for the following module.
+
+Target Module Path: {module_path}
+(Use this path to correctly import the module in your tests. E.g. if path is 'target_repo/src/utils/helpers.py', import as 'from target_repo.src.utils.helpers import ...')
 
 Target Module Code:
 ```python
@@ -35,13 +35,12 @@ Existing Test Code:
 Coverage Info:
 {coverage_info}
 
-INSTRUCTIONS:
-1. Analyze the target module and the existing tests.
-2. Identify gaps in coverage (branches, functions, or edge cases not tested).
-3. Write a COMPLETE, updated test file that includes the original tests (if valid) and NEW tests to cover the gaps.
-4. Do NOT remove existing tests unless they are incorrect.
-5. Output ONLY the python code for the new test file. Do not include markdown backticks or explanations.
-6. Ensure the code is runnable and imports are correct (assume `target_repo` is in python path).
+Task:
+1. Analyze the module code and existing tests.
+2. Write a COMPLETE Python test file that improves coverage.
+3. If tests exist, keep them and add new ones. If no tests exist, create a full suite.
+4. Ensure all imports are correct based on the module path provided.
+5. Return ONLY the python code for the test file. No markdown formatting, no explanations.
 """
         try:
             response = self.client.chat.completions.create(

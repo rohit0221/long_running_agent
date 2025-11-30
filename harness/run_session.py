@@ -29,7 +29,9 @@ def run_tests_script():
     logger.info(f"Running tests with command: {script}")
     result = subprocess.run(script, capture_output=True, text=True)
     
-    if result.returncode != 0:
+    # Exit code 0 means tests passed.
+    # Exit code 5 means "no tests collected", which is fine for a fresh start.
+    if result.returncode != 0 and result.returncode != 5:
         logger.error("Tests failed!")
         logger.error(result.stdout)
         logger.error(result.stderr)
@@ -103,6 +105,7 @@ def main():
     try:
         new_test_code = llm.generate_tests(
             module_code=module_code,
+            module_path=module_path,
             existing_test_code=existing_test_code,
             coverage_info=f"Current coverage: {current_cov}%"
         )
